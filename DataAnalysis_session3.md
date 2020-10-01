@@ -327,7 +327,7 @@ head(df)
 6      AUS 1965       3.0 11.3409    71.0
 ```
 
-Now it we have a panel data (= data from different countries for several
+Now we have a panel data (= data from different countries for several
 years & 3 variables), lets create a small animation with the gganimate
 package. It can run only in the RStudio and you can save there is you
 right click on the viewer pane and select save image.
