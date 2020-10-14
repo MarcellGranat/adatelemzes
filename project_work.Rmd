@@ -1,0 +1,87 @@
+---
+title: "A koronavírus hatása a BCE hallgatóinak tanulmányi eredményeire"
+author: "Zöld csapat"
+date: '2020-Q1 '
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, error = F, cache = T, tidy = T)
+library(tidyverse)
+```
+
+# Setup
+
+```{r}
+answers <- read_csv("answers.csv")
+```
+
+```{r}
+names_vector <- names(answers)
+names(answers) <- paste0("v", seq_along(answers))
+```
+
+```{r}
+mean(answers$v3=="Igen")
+```
+
+```{r}
+df <- answers %>% filter(v3 == "Igen")
+```
+
+```{r}
+answers <- answers %>% mutate(
+  v3 = factor(v3),
+  v8 = factor(v8, levels = c("Igen", "Nem", "Nem válaszolok")),
+  v10 = factor(v10),
+  v11 = factor(v11, levels = c("Igen", "Nem", "Nem válaszolok")),
+  v12 = factor(v12, levels = c("10001-30000", "30001-50000","50001-70000", "70001-90000","90001-110000", "110001-130000", "130001-nél több")),
+  v14 = factor(v14),
+  v15 = factor(v15),
+  v16 = factor(v16),
+  v17 = factor(v17),
+  v19 = factor(v19, levels = c("Igen", "Nem", "Nem tudom")),
+  v19 = factor(v19, levels = c("Igen", "Nem", "Nem tudom")),
+  v23 = factor(v23),
+  v25 = factor(v25),
+  v26 = factor(v26, levels = c("általános iskola,", "középiskola (szakiskola, gimnázium, szakközépiskola),","főiskola, főiskolai továbbképzés,", "egyetem, egyetemi továbbképzés.")),
+  v27 = factor(v27, levels = c("általános iskola,", "középiskola (szakiskola, gimnázium, szakközépiskola),","főiskola, főiskolai továbbképzés,", "egyetem, egyetemi továbbképzés.")),
+  v29 = factor(v29, levels = c("átlag alatti","átlagos", "átlag feletti", "jóval átlag feletti")),
+) %>% select(-c(v1,v30))
+
+# 24-ből bp
+```
+
+```{r}
+answers$v31 <-  ifelse(answers$v24 %/% 1000 == 1, 1, 0) # BP lakos?
+```
+
+```{r}
+data.frame(kerdes = names_vector[c(4,5)], atlagok = c(mean(answers$v4, na.rm = T),                                                 mean(answers$v5, na.rm = T)))
+```
+
+```{r}
+answers %>% group_by(v12) %>% summarise(n = n()) %>% mutate(
+  h = c(20000, 40000, 60000, 80000, 100000, 120000, 140000, NA)
+) %>% filter(!is.na(v12)) %>% mutate(s = n*h) %>% summarise(sum(s)/sum(n))
+```
+
+Havi átlagos költés: 82222 Ft.
+
+# Figures
+
+```{r}
+answers %>% group_by(v12) %>% summarise(n = n()) %>% filter(!is.na(v12)) %>% ggplot(aes(x = v12, y = n)) +
+  geom_col(fill = "grey60", color = "black") + labs(title = "Átlagos havi költések", y = "válaszok száma", x = "költés (Ft)")
+```
+
+```{r}
+answers %>% select(v6,v7,v9) %>% set_names(names_vector[c(6,7,9)]) %>% gather() %>% ggplot(aes(value)) + geom_histogram(fill = "grey60", color = "black") +
+  facet_wrap(~key, scales = "free")
+```
+
+```{r}
+answers %>% group_by(v29) %>% summarise(n = n(), lh = mean(v28, na.rm = T)) %>% set_names(c("v29", "Válaszadók száma", "Átlagosan egy háztartásaban élők száma")) %>% pivot_longer(-1) %>% ggplot(aes(x = v29, y = value, fill = name)) + geom_col(color = "black",position = "dodge") + 
+  labs(x =  "Család anyaig helyzete", fill = "", y = "") + theme(legend.position = "bottom")
+```
+
