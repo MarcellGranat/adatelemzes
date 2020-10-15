@@ -1,0 +1,221 @@
+---
+title: "DA - Tidyverse"
+author: "Marcell Granát"
+date: '2020 10 15 '
+output: github_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Tidyverse is a collection of packages, but you have to managa it as any other package: `install.packages(tidyverse)` if you have never used before, and `library(tidyverse)` always, before you start to use it. After you load in, you max see the attached packages.
+```{r}
+library(tidyverse)
+```
+
+Lets create the dataset we used 2 weeks ago.
+
+```{r, warning=FALSE, message=FALSE}
+fertility <- read_csv("https://stats.oecd.org/sdmx-json/data/DP_LIVE/.FERTILITY.../OECD?contentType=csv&detail=code&separator=comma&csv-lang=en")
+fertility<-fertility[,c(1,6,7)]
+populationsize <- read_csv("https://stats.oecd.org/sdmx-json/data/DP_LIVE/.POP.TOT.MLN_PER.A/OECD?contentType=csv&detail=code&separator=comma&csv-lang=en&startPeriod=1960&endPeriod=2018")
+lifeexp <- read.csv("https://stats.oecd.org/sdmx-json/data/DP_LIVE/.LIFEEXP.TOT.YR.A/OECD?contentType=csv&detail=code&separator=comma&csv-lang=en&startPeriod=1960&endPeriod=2019")
+populationsize <-populationsize[,c(1,6,7)]
+lifeexp <- lifeexp[,c(1,6,7)]
+names(fertility)[3] <- "fertility"
+names(populationsize)[3] <- "pop"
+names(lifeexp)[3] <- "lifeexp"
+names(lifeexp)[1] <- "LOCATION"
+
+df <- fertility
+df <- merge(df, populationsize)
+df <- merge(df,lifeexp)
+```
+
+## Pipe
+
+Magnitr provides us to use `%>%` pipe. When you read a code, you can say **then**, like *take the x vector, and then calculate the mean of that*. (Later examples will make it less messy)
+
+```{r}
+x <- c(1,2,3,10)
+mean(x)
+x %>% mean()
+```
+
+## Filter
+
+You can filter the rows with the `filter` function.
+
+1) Return the rows of df, where the LOCATION is Hungary.
+
+```{r}
+filter(df, LOCATION == "HUN")
+```
+
+2) Return the rows of df, where the LOCATION is Hungary or USA.
+
+```{r}
+filter(df, LOCATION == "HUN" | LOCATION == "USA")
+```
+
+2) Return the rows of df, where the LOCATION is Hungary or USA and the TIME is higher than 2000.
+
+```{r}
+filter(df, LOCATION == "HUN" | LOCATION == "USA" & TIME > 2000)
+```
+
+4) Create a line graph from the fertility rate of Hungary
+
+```{r}
+df %>%
+  filter(LOCATION == "HUN") %>%
+  ggplot(mapping = aes(x = TIME, y = fertility)) + # you may realize that I only use the %>% before ggplot -> I do not need to create a new variable
+  geom_line()
+```
+
+# Mutate with functions
+
+1) Lets create the plot from the previous session.
+
+```{r}
+df %>% ggplot(aes(x = TIME, y = fertility, color = LOCATION)) + 
+  geom_line() + labs(
+    title = "Total fertility rate across the world",
+    x = "Time",
+    y = "Children/woman",
+    color = NULL
+  )
+```
+2) How much is actual fertility rate compared to the value of 1960? -> **Base index**
+
+We need a funtion first to transform the values:
+
+```{r}
+x <- c(2,5,7,4,2,15,6,8,10)
+base.index <- function(x) {
+  x/x[1]
+}
+base.index(x)
+```
+```{r}
+y <- c(10, 40, 33, 31, 66, 244,67, 32, 54)
+base.index(y)
+```
+> When you've written the same code 3 times, write a function - Hadley Wickham, Chief Scientist at RStudio
+
+```{r}
+df %>% select(LOCATION, TIME, fertility) %>% # select only the columns we need
+  pivot_wider(names_from = LOCATION, values_from = fertility) %>% # add a new column to each country
+  mutate_at(-1, function (x) base.index(x)) %>% # calculate the base index to each column, except the 1st one
+  pivot_longer(cols = -1, names_to = "LOCATION") %>% # transfrom back to 3 columns, in order to use it with ggplot
+  ggplot(mapping = aes(x = TIME, y = value, color = LOCATION)) +
+  geom_line() + labs(
+    title = "Base index of total fertility rate across the world",
+    subtitle = "1960 = 100%",
+    x = "Time",
+    y = NULL,
+    color = NULL
+  )
+```
+3) How much is rate of the actual value compared to the value of the last year? -> Chain index
+```{r}
+chain.index <- function(x) {
+x/lag(x)
+}
+```
+
+```{r}
+chain.index(x)
+```
+
+Now you can copy & paste the previous chain code, we need to change only the 4th row.
+
+```{r}
+df %>%
+  select(LOCATION, TIME, fertility) %>%
+  pivot_wider(names_from = LOCATION, values_from = fertility) %>% 
+  mutate_at(-1, function(x) chain.index(x)) %>% 
+  pivot_longer(cols = -1, names_to = "LOCATION") %>% 
+  ggplot(mapping = aes(x = TIME, y = value, color = LOCATION)) + 
+  geom_line() + 
+  labs(
+    title = "Chain index of total fertility rate across the world",
+    x = "Time",
+    y = NULL,
+    color = NULL
+  )
+```
+This plot is messy, lets check it only for a few countries -> add a `filter()` to a the beginning.
+
+```{r}
+df %>%
+  select(LOCATION, TIME, fertility) %>%
+  filter(LOCATION == "HUN" | LOCATION == "CZE") %>% 
+  pivot_wider(names_from = LOCATION, values_from = fertility) %>% 
+  mutate_at(-1, function(x) chain.index(x)) %>% 
+  pivot_longer(cols = -1, names_to = "LOCATION") %>% 
+  ggplot(mapping = aes(x = TIME, y = value, color = LOCATION)) + 
+  geom_line() + 
+  labs(
+    title = "Chain index of total fertility rate across the world",
+    x = "Time",
+    y = NULL,
+    color = NULL
+  )
+```
+## Summarise
+
+Use the summarise fn combined with the group_by fn.
+
+```{r}
+df %>% group_by(LOCATION) %>% 
+  summarise(mean = mean(fertility), sd  = sd(fertility), varibility = sd(fertility)/mean(fertility))
+```
+
+## Mutate
+
+Previously we saw that mutate_at can modify all the variables at the same time. The simple mutate can create a new variable or redefine an existing one (if the name of the new variables is the same as the original). However, this fn will not affect the variables which are not defined here, so we will get back the original df with this modfication.
+
+```{r}
+df %>% 
+  mutate( # add new variable
+    pop_in_person = pop*1000000
+  ) %>%
+  head() # print only the first few elements
+```
+In contrast, via `transmute` you can also create new variables, but the return will be a df only with the variables, which are defined here.
+For a minimal example: calculate the average population size for every 10 years in China, but instead of Million people, lets give the result in number of people.
+
+```{r}
+options(scipen=999) # avoid R printing scientific notation
+# This is not part of this class, but the plot with huge numbers will be created with 9+10e if you miss this
+```
+
+
+```{r}
+df %>% transmute( # keeps only the variables, which are defined here & u can add new ones
+  LOCATION = LOCATION,
+  TIME = (TIME %/% 10)*10, # removing the remaining part from dividing by 10
+  pop_in_person = pop*1000000 # change the dimension
+) %>% filter(LOCATION == "CHN") %>% mutate( # filter for China
+  TIME = paste0(as.character(TIME), "-", as.character(TIME + 10))
+) %>% group_by(TIME) %>%
+  summarise(mean = mean(pop_in_person)) %>%
+  ggplot(aes(x = TIME, y = mean)) +
+  geom_col(color = "black", fill = "grey60") + 
+  labs(x = "Time", y = "Population size (Number of people)", title = "The mean of the population size for every 10 years in China")
+```
+
+## Arrange
+You can change the order of the rows in a df by the arrange fn.
+
+Example: When was the highest value of life expectency in Hungary. (Print the 5 highest)
+```{r}
+df %>% filter(LOCATION  == "HUN") %>%
+  select(TIME, lifeexp) %>% 
+  arrange(desc(lifeexp)) %>% # Desc order by lifeexp
+  head(5) # only the first 5 rows
+```
