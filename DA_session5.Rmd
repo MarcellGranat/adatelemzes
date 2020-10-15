@@ -76,7 +76,7 @@ df %>%
   geom_line()
 ```
 
-# Mutate with functions
+## Mutate with functions
 
 1) Lets create the plot from the previous session.
 
@@ -89,6 +89,7 @@ df %>% ggplot(aes(x = TIME, y = fertility, color = LOCATION)) +
     color = NULL
   )
 ```
+
 2) How much is actual fertility rate compared to the value of 1960? -> **Base index**
 
 We need a funtion first to transform the values:
@@ -120,6 +121,7 @@ df %>% select(LOCATION, TIME, fertility) %>% # select only the columns we need
     color = NULL
   )
 ```
+
 3) How much is rate of the actual value compared to the value of the last year? -> Chain index
 ```{r}
 chain.index <- function(x) {
@@ -148,6 +150,7 @@ df %>%
     color = NULL
   )
 ```
+
 This plot is messy, lets check it only for a few countries -> add a `filter()` to a the beginning.
 
 ```{r}
@@ -166,6 +169,7 @@ df %>%
     color = NULL
   )
 ```
+
 ## Summarise
 
 Use the summarise fn combined with the group_by fn.

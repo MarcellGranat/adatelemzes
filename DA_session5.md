@@ -375,7 +375,7 @@ df %>%
 
 ![](DA_session5_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-# Mutate with functions
+## Mutate with functions
 
 1)  Lets create the plot from the previous session.
 
@@ -391,9 +391,10 @@ df %>% ggplot(aes(x = TIME, y = fertility, color = LOCATION)) +
   )
 ```
 
-![](DA_session5_files/figure-gfm/unnamed-chunk-8-1.png)<!-- --> 2) How
-much is actual fertility rate compared to the value of 1960? -\> **Base
-index**
+![](DA_session5_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+2)  How much is actual fertility rate compared to the value of 1960? -\>
+    **Base index**
 
 We need a funtion first to transform the values:
 
@@ -434,9 +435,12 @@ df %>% select(LOCATION, TIME, fertility) %>% # select only the columns we need
 
     ## Warning: Removed 650 row(s) containing missing values (geom_path).
 
-![](DA_session5_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> 3) How
-much is rate of the actual value compared to the value of the last year?
--\> Chain index
+![](DA_session5_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+3)  How much is rate of the actual value compared to the value of the
+    last year? -\> Chain index
+
+<!-- end list -->
 
 ``` r
 chain.index <- function(x) {
@@ -472,8 +476,9 @@ df %>%
 
     ## Warning: Removed 240 row(s) containing missing values (geom_path).
 
-![](DA_session5_files/figure-gfm/unnamed-chunk-14-1.png)<!-- --> This
-plot is messy, lets check it only for a few countries -\> add a
+![](DA_session5_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+This plot is messy, lets check it only for a few countries -\> add a
 `filter()` to a the beginning.
 
 ``` r
@@ -495,8 +500,9 @@ df %>%
 
     ## Warning: Removed 2 row(s) containing missing values (geom_path).
 
-![](DA_session5_files/figure-gfm/unnamed-chunk-15-1.png)<!-- --> \#\#
-Summarise
+![](DA_session5_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+## Summarise
 
 Use the summarise fn combined with the group\_by fn.
 
